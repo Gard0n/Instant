@@ -1,4 +1,4 @@
-const CONTACT_EMAIL = 'TON_EMAIL_ICI@example.com'
+const CONTACT_EMAIL = 'mathieu.jardin.pro@gmail.com'
 
 export function PrivacyPage() {
   return (

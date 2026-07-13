@@ -35,6 +35,10 @@ export function useCamera() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream
           videoRef.current.onloadedmetadata = () => setVideoReady(true)
+          // Safari n'enclenche pas toujours la lecture depuis l'attribut autoPlay
+          // quand srcObject est assigné dynamiquement : il faut l'appeler explicitement,
+          // sinon l'aperçu reste figé sur une image noire malgré la permission accordée.
+          videoRef.current.play().catch(() => {})
         }
         setStatus('granted')
       } catch {
