@@ -1,11 +1,10 @@
-import type { RefObject } from 'react'
 import { getFilterCss } from '../../../lib/filters/canvasFilters'
 import type { FilterStyle } from '../../../types/event'
 import type { CaptureStatus } from '../hooks/usePhotoCapture'
 import type { FacingMode } from '../hooks/useCamera'
 
 interface CameraViewProps {
-  videoRef: RefObject<HTMLVideoElement | null>
+  videoRef: (node: HTMLVideoElement | null) => void
   eventName: string
   filterStyle: FilterStyle
   facingMode: FacingMode

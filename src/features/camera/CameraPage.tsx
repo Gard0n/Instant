@@ -11,7 +11,7 @@ import { CameraPermissionError } from './components/CameraPermissionError'
 export function CameraPage() {
   const { id } = useParams<{ id: string }>()
   const { event, loading: eventLoading, error: eventError } = useEvent(id)
-  const { videoRef, status, facingMode, videoReady, flipCamera, retry } = useCamera()
+  const { videoRef, setVideoNode, status, facingMode, videoReady, flipCamera, retry } = useCamera()
   const [guestName, setGuestName] = useState('')
 
   const {
@@ -65,7 +65,7 @@ export function CameraPage() {
   return (
     <>
       <CameraView
-        videoRef={videoRef}
+        videoRef={setVideoNode}
         eventName={event.name}
         filterStyle={event.filter_style}
         facingMode={facingMode}

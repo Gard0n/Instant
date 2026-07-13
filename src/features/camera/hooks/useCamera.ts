@@ -4,11 +4,35 @@ export type FacingMode = 'user' | 'environment'
 export type CameraStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported'
 
 export function useCamera() {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [facingMode, setFacingMode] = useState<FacingMode>('environment')
   const [status, setStatus] = useState<CameraStatus>('idle')
   const [videoReady, setVideoReady] = useState(false)
+
+  const attachStreamToVideo = useCallback((video: HTMLVideoElement) => {
+    if (!streamRef.current) return
+    video.srcObject = streamRef.current
+    video.onloadedmetadata = () => setVideoReady(true)
+    // Safari n'enclenche pas toujours la lecture depuis l'attribut autoPlay
+    // quand srcObject est assigné dynamiquement : il faut l'appeler explicitement.
+    video.play().catch(() => {})
+  }, [])
+
+  // Ref en callback plutôt qu'un simple useRef : le composant CameraView ne monte
+  // le <video> qu'une fois le statut 'granted', donc au moment où le flux getUserMedia
+  // se résout, l'élément DOM n'existe pas encore et une simple assignation échouerait
+  // silencieusement. Cette callback attache le flux dès que l'élément apparaît,
+  // peu importe lequel (flux ou DOM) est prêt en premier.
+  const setVideoNode = useCallback(
+    (node: HTMLVideoElement | null) => {
+      videoRef.current = node
+      if (node) {
+        attachStreamToVideo(node)
+      }
+    },
+    [attachStreamToVideo],
+  )
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop())
@@ -33,19 +57,14 @@ export function useCamera() {
         })
         streamRef.current = stream
         if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.onloadedmetadata = () => setVideoReady(true)
-          // Safari n'enclenche pas toujours la lecture depuis l'attribut autoPlay
-          // quand srcObject est assigné dynamiquement : il faut l'appeler explicitement,
-          // sinon l'aperçu reste figé sur une image noire malgré la permission accordée.
-          videoRef.current.play().catch(() => {})
+          attachStreamToVideo(videoRef.current)
         }
         setStatus('granted')
       } catch {
         setStatus('denied')
       }
     },
-    [stopStream],
+    [stopStream, attachStreamToVideo],
   )
 
   useEffect(() => {
@@ -60,5 +79,5 @@ export function useCamera() {
 
   const retry = useCallback(() => startStream(facingMode), [startStream, facingMode])
 
-  return { videoRef, status, facingMode, videoReady, flipCamera, retry }
+  return { videoRef, setVideoNode, status, facingMode, videoReady, flipCamera, retry }
 }
